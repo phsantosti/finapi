@@ -15,14 +15,26 @@ app.post("/account", (request, response) => {
    const {name, document} = request.body;
    const id = uuidv4();
 
-   customers.push({
-      id: id,
-      name: name,
-      document: document,
-      statement: []
+   const customerAlreadyExists = customers.some((customer) => {
+      return customer.document === document;
    });
 
-   return response.status(201).send();
+   if(customerAlreadyExists){
+      return response.status(400).json({
+         success: false,
+         title: "Oops!",
+         messsage: "Customer already exits!"
+      });
+   } else {
+      customers.push({
+         id: id,
+         name: name,
+         document: document,
+         statement: []
+      });
+
+      return response.status(201).json(customers);
+   }
 });
 
 app.listen(3333);
