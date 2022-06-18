@@ -122,5 +122,12 @@ app.post("/withdraw", checkIfAccountExists, function (request, response){
       return response.status(201).send();
    }
 });
+app.get("/balance", checkIfAccountExists, function (request, response){
+   const { customer } = request;
+   const balance = getBalance(customer.statement);
+   return response.status(200).json({
+      balance: balance
+   });
+});
 
 app.listen(3333);
