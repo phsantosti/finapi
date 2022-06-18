@@ -23,6 +23,15 @@ function checkIfAccountExists(request, response, next){
       return next();
    }
 }
+function getBalance(statement) {
+   return statement.reduce((acumulator, operation) => {
+      if (operation.type === 'credit') {
+         return acumulator + operation.amount;
+      } else {
+         return acumulator - operation.amount;
+      }
+   }, 0);
+}
 
 
 app.post("/account", function (request, response){
@@ -53,6 +62,17 @@ app.get("/statement", checkIfAccountExists, function (request, response){
    const { customer } = request;
    return response.json(customer.statement);
 });
+app.get("/statement/date", checkIfAccountExists, function (request, response){
+   const { customer } = request;
+   const { date } = request.query;
+
+   const formatedDate = new Date(date + " 00:00:00");
+   const statement = customer.statement.filter((statement) => {
+      return statement.created_at.toDateString() === new Date(formatedDate).toDateString();
+   });
+
+   return response.json(statement);
+});
 app.post("/deposit", checkIfAccountExists, function (request, response){
    const { amount, description } = request.body;
    const { customer } = request;
@@ -66,6 +86,27 @@ app.post("/deposit", checkIfAccountExists, function (request, response){
 
    customer.statement.push(statementOperation);
    return response.status(201).send();
+});
+app.post("/withdraw", checkIfAccountExists, function (request, response){
+   const { amount } = request.body;
+   const { customer } = request;
+
+   const balance = getBalance(customer.statement);
+   if(balance < amount){
+      return response.status(400).json({
+         error: "Insuficient funds!"
+      });
+   } else {
+      const statementOperation = {
+         amount: amount,
+         description: "Withdraw",
+         created_at: new Date(),
+         type: "debit"
+      };
+
+      customer.statement.push(statementOperation);
+      return response.status(201).send();
+   }
 });
 
 app.listen(3333);
