@@ -5,13 +5,27 @@ const app = express();
 app.use(express.json());
 
 const customers = [];
+
 /**
- * document = string,
- * name = string
- * id = uid,
- * statement = []
+ * Middleware
  */
-app.post("/account", (request, response) => {
+function checkIfAccountExists(request, response, next){
+   const { document } = request.headers;
+   const customer = customers.find((customer) => {
+      return customer.document === document;
+   });
+   if(!customer){
+      return response.status(400).json({
+         error: "Customer not found"
+      });
+   } else {
+      request.customer = customer;
+      return next();
+   }
+}
+
+
+app.post("/account", function (request, response){
    const {name, document} = request.body;
    const id = uuidv4();
 
@@ -21,9 +35,7 @@ app.post("/account", (request, response) => {
 
    if(customerAlreadyExists){
       return response.status(400).json({
-         success: false,
-         title: "Oops!",
-         messsage: "Customer already exits!"
+         error: "Customer already exits!"
       });
    } else {
       customers.push({
@@ -33,8 +45,27 @@ app.post("/account", (request, response) => {
          statement: []
       });
 
-      return response.status(201).json(customers);
+      return response.status(201).send();
    }
+});
+
+app.get("/statement", checkIfAccountExists, function (request, response){
+   const { customer } = request;
+   return response.json(customer.statement);
+});
+app.post("/deposit", checkIfAccountExists, function (request, response){
+   const { amount, description } = request.body;
+   const { customer } = request;
+
+   const statementOperation = {
+      amount: amount,
+      description: description,
+      created_at: new Date(),
+      type: "credit"
+   };
+
+   customer.statement.push(statementOperation);
+   return response.status(201).send();
 });
 
 app.listen(3333);
