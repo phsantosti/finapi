@@ -67,6 +67,11 @@ app.get("/account", checkIfAccountExists, function (request, response){
    const { customer } = request;
    return response.status(200).json(customer);
 });
+app.delete("/account", checkIfAccountExists, function (request, response){
+   const { customer } = request;
+   customers.splice(customer, 1);
+   return response.status(200).json(customers);
+});
 app.get("/statement", checkIfAccountExists, function (request, response){
    const { customer } = request;
    return response.json(customer.statement);
