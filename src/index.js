@@ -57,7 +57,16 @@ app.post("/account", function (request, response){
       return response.status(201).send();
    }
 });
-
+app.put("/account", checkIfAccountExists, function (request, response){
+   const { name } = request.body;
+   const { customer } = request;
+   customer.name = name;
+   return response.status(201).send();
+});
+app.get("/account", checkIfAccountExists, function (request, response){
+   const { customer } = request;
+   return response.status(200).json(customer);
+});
 app.get("/statement", checkIfAccountExists, function (request, response){
    const { customer } = request;
    return response.json(customer.statement);
